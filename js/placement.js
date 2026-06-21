@@ -1,8 +1,7 @@
 /**
  * placement.js
- * Responsabilidade única: controlar a troca entre Modo Histórico (GPS)
- * e Modo Livre, servindo como ponto único de integração para a equipe
- * de geolocalização.
+ * Gerencia o estado atual de visualização do modelo na câmera
+ * (Modo Histórico ancorado vs Modo Livre).
  */
 
 export const PlacementModes = Object.freeze({
@@ -11,8 +10,8 @@ export const PlacementModes = Object.freeze({
 });
 
 export class PlacementManager {
-  constructor(modelController, { onModeChange } = {}) {
-    this.modelController = modelController;
+  constructor(gpsController, { onModeChange } = {}) {
+    this.gpsController = gpsController;
     this.onModeChange = onModeChange;
     this.currentMode = PlacementModes.FREE;
   }
@@ -30,14 +29,16 @@ export class PlacementManager {
   }
 
   enableGPSMode() {
+    if (this.isGPSMode()) return;
     this.currentMode = PlacementModes.GPS;
-    this.modelController.enableGPSMode();
+    this.gpsController.enable();
     this._notify();
   }
 
   enablePlacementMode() {
+    if (this.isFreeMode()) return;
     this.currentMode = PlacementModes.FREE;
-    this.modelController.enablePlacementMode();
+    this.gpsController.disable();
     this._notify();
   }
 
