@@ -7,10 +7,13 @@ import { GPSController } from './gps.js';
 import { PlacementManager } from './placement.js';
 import { GestureController } from './gestures.js';
 import { UIController } from './ui.js';
+import { CameraVideoFix } from './camera-fix.js';
 
 function init() {
   const scene = document.querySelector('a-scene');
   if (!scene) return;
+
+  new CameraVideoFix();
 
   const modelController = new ModelController('#bonde-model');
   const gpsController = new GPSController(modelController);
