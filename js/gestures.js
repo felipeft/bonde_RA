@@ -1,7 +1,7 @@
 /**
  * gestures.js
- * Adicionado: tracking do eixo Y no deslize de 1 dedo para permitir 
- * rotação vertical (Pitch) e ver o bonde por cima ou por baixo.
+ * Captura 1 dedo para ROTACIONAR (em todos os eixos) 
+ * e 2 dedos para MOVER (Arrastar pela tela) e ESCALAR (Pinça).
  */
 export class GestureController {
   constructor(targetElement, modelController, placementManager, options = {}) {
@@ -13,7 +13,7 @@ export class GestureController {
     this.moveSensitivity = options.moveSensitivity ?? 0.012; 
 
     this.activeTouches = new Map();
-    this.lastSingle = null; // Agora guarda X e Y
+    this.lastSingle = null;
     this.lastPinchDistance = null;
     this.lastPinchMidpoint = null;
 
@@ -55,6 +55,7 @@ export class GestureController {
       this._handleRotate();
     } else if (this.activeTouches.size === 2) {
       this._handlePinchScale();
+      // O mover de 2 dedos só funciona se estiver no Modo Livre
       if (this.placementManager.isFreeMode()) {
         this._handlePan();
       }
@@ -91,10 +92,10 @@ export class GestureController {
       return;
     }
     
-    // Captura o movimento nos dois eixos da tela
     const deltaX = touch.clientX - this.lastSingle.x;
     const deltaY = touch.clientY - this.lastSingle.y;
 
+    // Envia os movimentos X e Y para rotacionar o bonde
     this.modelController.rotate(deltaX * this.rotationSensitivity, deltaY * this.rotationSensitivity);
     this.lastSingle = { x: touch.clientX, y: touch.clientY };
   }
@@ -125,6 +126,7 @@ export class GestureController {
     const dx = midpoint.x - this.lastPinchMidpoint.x;
     const dy = midpoint.y - this.lastPinchMidpoint.y;
     
+    // Envia o movimento do arrasto de 2 dedos para transladar o objeto
     this.modelController.move(dx * this.moveSensitivity, dy * this.moveSensitivity);
     this.lastPinchMidpoint = midpoint;
   }
