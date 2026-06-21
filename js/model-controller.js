@@ -8,7 +8,8 @@ export class ModelController {
     this.scaleMin = options.scaleMin ?? 0.3;
     this.scaleMax = options.scaleMax ?? 4.0;
 
-    this.defaultPosition = options.defaultPosition ?? { x: 0, y: 0, z: -3 };
+    // Posição ajustada para enquadrar perfeitamente no novo setup de câmera
+    this.defaultPosition = options.defaultPosition ?? { x: 0, y: -0.5, z: -4 };
     this.defaultRotationY = options.defaultRotationY ?? 0;
     this.defaultScale = options.defaultScale ?? 1;
 
@@ -51,7 +52,6 @@ export class ModelController {
 
   rotate(deltaYDegrees) {
     if (!this.object3D) return;
-    // THREE está disponível no escopo global através do A-Frame
     this.object3D.rotation.y += THREE.MathUtils.degToRad(deltaYDegrees);
   }
 
