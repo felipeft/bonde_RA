@@ -10,25 +10,25 @@
   <link rel="stylesheet" href="css/style.css" />
 
   <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-  
-  <script type='text/javascript' src='https://raw.githack.com/AR-js-org/AR.js/3.4.5/three.js/build/ar-threex-location-only.js'></script>
-  
-  <script type='text/javascript' src='https://raw.githack.com/AR-js-org/AR.js/3.4.5/aframe/build/aframe-ar.js'></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/[email protected]/aframe/build/aframe-ar.js"></script>
 </head>
 <body>
 
   <a-scene
+    embedded
     vr-mode-ui="enabled: false"
-    renderer="antialias: true; alpha: true; logarithmicDepthBuffer: true"
+    renderer="antialias: true; alpha: true;"
     arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;"
   >
     <a-assets>
       <audio id="narration-audio" preload="none"></audio>
     </a-assets>
 
+    <a-marker preset="hiro"></a-marker>
+
     <a-entity
       id="bonde-model"
-      position="0 0 -3"
+      position="0 -0.5 -4"
       rotation="0 0 0"
       scale="1 1 1"
     ></a-entity>
@@ -36,7 +36,7 @@
     <a-entity light="type: ambient; intensity: 0.9; color: #FFF6E8"></a-entity>
     <a-entity light="type: directional; intensity: 0.55; color: #FFF6E8" position="1 2 1"></a-entity>
 
-    <a-camera gps-new-camera="gpsMinDistance: 5" look-controls="enabled: false"></a-camera>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
   </a-scene>
 
   <header id="mode-status" class="mode-status" aria-live="polite"></header>
