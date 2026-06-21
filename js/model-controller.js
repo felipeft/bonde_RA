@@ -1,13 +1,14 @@
 /**
- * model-controller.js
- * Modificado: A função reset() agora teletransporta o bonde dinamicamente 
- * para onde a câmera do celular estiver apontando no mundo real.
+ * ModelController
+ * Responsabilidade única: toda a manipulação do modelo 3D do bonde
+ * (carregamento, escala, rotação, deslocamento, reset, áudio e captura).
  */
 export class ModelController {
   constructor(entitySelector, options = {}) {
     this.scaleMin = options.scaleMin ?? 0.3;
-    this.scaleMax = options.scaleMax ?? 6.0;
+    this.scaleMax = options.scaleMax ?? 4.0;
 
+    this.defaultPosition = options.defaultPosition ?? { x: 0, y: 0, z: -3 };
     this.defaultRotationY = options.defaultRotationY ?? 0;
     this.defaultScale = options.defaultScale ?? 1;
 
@@ -21,9 +22,15 @@ export class ModelController {
 
     this.entity.addEventListener('model-loaded', () => {
       console.log('ModelController: modelo carregado com sucesso.');
+      this.reset();
+    });
+
+    this.entity.addEventListener('model-error', (event) => {
+      console.error('ModelController: falha ao carregar o modelo GLB.', event.detail);
     });
   }
 
+  /** Solicita o carregamento do modelo GLB na entidade gerenciada. */
   loadModel(src = 'assets/bonde.glb') {
     if (!this.entity) return;
     this.entity.setAttribute('gltf-model', `url(${src})`);
@@ -33,73 +40,87 @@ export class ModelController {
     return this.entity ? this.entity.object3D : null;
   }
 
+  /** Define a escala absoluta, respeitando os limites mínimo e máximo. */
   setScale(scale) {
     if (!this.object3D) return;
     this.currentScale = this._clamp(scale, this.scaleMin, this.scaleMax);
     this.object3D.scale.set(this.currentScale, this.currentScale, this.currentScale);
   }
 
+  /** Aplica um fator multiplicativo à escala atual (usado pelo gesto de pinça). */
   scaleBy(factor) {
     this.setScale(this.currentScale * factor);
   }
 
+  /** * Rotaciona o modelo.
+   * Utiliza eixos globais (World Axis) para que o movimento do dedo na tela
+   * sempre corresponda à mesma rotação, independentemente da orientação atual do modelo.
+   */
   rotate(deltaXDegrees, deltaYDegrees = 0) {
     if (!this.object3D) return;
-    this.object3D.rotation.y += THREE.MathUtils.degToRad(deltaXDegrees);
-    this.object3D.rotation.x += THREE.MathUtils.degToRad(deltaYDegrees);
+
+    const radX = THREE.MathUtils.degToRad(deltaXDegrees);
+    const radY = THREE.MathUtils.degToRad(deltaYDegrees);
+
+    // Movimento horizontal do dedo gira o modelo em torno do eixo Y Global (Giro lateral)
+    const worldAxisY = new THREE.Vector3(0, 1, 0);
+    this.object3D.rotateOnWorldAxis(worldAxisY, radX);
+
+    // Movimento vertical do dedo gira o modelo em torno do eixo X Global (Giro para cima/baixo)
+    const worldAxisX = new THREE.Vector3(1, 0, 0);
+    this.object3D.rotateOnWorldAxis(worldAxisX, radY);
   }
 
-  move(deltaScreenX, deltaScreenY) {
+  /** Desloca o modelo livremente pela tela ao arrastar com dois dedos. */
+  move(deltaX, deltaY) {
     if (!this.object3D) return;
-    this.object3D.position.x += deltaScreenX;
-    this.object3D.position.y -= deltaScreenY;
+    this.object3D.position.x += deltaX;
+    this.object3D.position.y -= deltaY; // Subtrai para que o arrasto para baixo desça o modelo
   }
 
-  /**
-   * Pega a posição e rotação atual da câmera e joga o bonde 
-   * exatamente 5 metros para a frente do usuário.
-   */
+  /** Restaura posição, rotação e escala originais. */
   reset() {
     if (!this.object3D) return;
-    
-    const cameraEl = document.querySelector('a-camera') || document.querySelector('[camera]');
-    
-    if (cameraEl && cameraEl.object3D) {
-      const camera3D = cameraEl.object3D;
-
-      // Cria um vetor apontando 5 metros para frente no eixo Z
-      const forwardVector = new THREE.Vector3(0, 0, -5);
-      
-      // Aplica a rotação do giroscópio do celular a este vetor
-      forwardVector.applyQuaternion(camera3D.quaternion);
-
-      // Soma a posição da câmera para obter a posição final no mundo
-      const targetPosition = camera3D.position.clone().add(forwardVector);
-
-      // Abaixa 1 metro para não ficar flutuando na altura do olho
-      targetPosition.y -= 1;
-
-      // Move o bonde para essa nova posição em frente à câmera
-      this.object3D.position.copy(targetPosition);
-
-      // Zera a rotação para ficar de frente
-      this.object3D.rotation.set(0, 0, 0);
-    }
-
-    // Reseta o tamanho
+    const { x, y, z } = this.defaultPosition;
+    this.object3D.position.set(x, y, z);
+    this.object3D.rotation.set(0, this.defaultRotationY, 0);
     this.currentScale = this.defaultScale;
     this.object3D.scale.set(this.currentScale, this.currentScale, this.currentScale);
   }
 
-  playNarration(src = 'assets/audio/narracao.mp3') {
-    const audio = document.getElementById('narration-audio');
-    if (!audio) return;
-    if (audio.getAttribute('src') !== src) audio.setAttribute('src', src);
-    audio.play().catch(err => console.warn('Áudio indisponível.', err));
+  /** Ponto de integração com a equipe de geolocalização. */
+  enableGPSMode() {
+    console.log('ModelController: modo histórico (GPS) ativado — aguardando integração de geolocalização.');
   }
 
+  /** Libera o modelo para posicionamento manual pelo usuário. */
+  enablePlacementMode() {
+    console.log('ModelController: modo livre ativado.');
+  }
+
+  /**
+   * Reproduz o áudio de narração associado ao bonde.
+   * A pasta assets/audio/ está preparada para receber o arquivo final.
+   */
+  playNarration(src = 'assets/audio/narracao.mp3') {
+    const audio = document.getElementById('narration-audio');
+    if (!audio) {
+      console.warn('ModelController: elemento de áudio não encontrado.');
+      return;
+    }
+
+    if (audio.getAttribute('src') !== src) {
+      audio.setAttribute('src', src);
+    }
+
+    audio.play().catch((err) => {
+      console.warn('ModelController: reprodução bloqueada ou arquivo de áudio ainda não disponível.', err);
+    });
+  }
+
+  /** Estrutura preparada para captura de tela da cena AR. */
   takeScreenshot() {
-    console.log('Implementação futura.');
+    console.log('ModelController: takeScreenshot() preparada — implementação futura.');
   }
 
   _clamp(value, min, max) {
