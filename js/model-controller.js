@@ -1,14 +1,13 @@
 /**
  * model-controller.js
- * Aplica fisicamente os movimentos de rotação, escala e posicionamento (pan) na entidade 3D.
+ * Modificado: A função reset() agora teletransporta o bonde dinamicamente 
+ * para onde a câmera do celular estiver apontando no mundo real.
  */
 export class ModelController {
   constructor(entitySelector, options = {}) {
     this.scaleMin = options.scaleMin ?? 0.3;
     this.scaleMax = options.scaleMax ?? 6.0;
 
-    // Posição inicial: 1 unidade abaixo da câmera e 5 unidades pra frente.
-    this.defaultPosition = options.defaultPosition ?? { x: 0, y: -1, z: -5 };
     this.defaultRotationY = options.defaultRotationY ?? 0;
     this.defaultScale = options.defaultScale ?? 1;
 
@@ -22,7 +21,6 @@ export class ModelController {
 
     this.entity.addEventListener('model-loaded', () => {
       console.log('ModelController: modelo carregado com sucesso.');
-      this.reset();
     });
   }
 
@@ -47,24 +45,48 @@ export class ModelController {
 
   rotate(deltaXDegrees, deltaYDegrees = 0) {
     if (!this.object3D) return;
-    // Arrasto horizontal gira no eixo Y
     this.object3D.rotation.y += THREE.MathUtils.degToRad(deltaXDegrees);
-    // Arrasto vertical gira no eixo X (inclina pra cima e pra baixo)
     this.object3D.rotation.x += THREE.MathUtils.degToRad(deltaYDegrees);
   }
 
   move(deltaScreenX, deltaScreenY) {
     if (!this.object3D) return;
-    // Arrasto de 2 dedos move o objeto lateralmente ou para cima/baixo na tela
     this.object3D.position.x += deltaScreenX;
     this.object3D.position.y -= deltaScreenY;
   }
 
+  /**
+   * Pega a posição e rotação atual da câmera e joga o bonde 
+   * exatamente 5 metros para a frente do usuário.
+   */
   reset() {
     if (!this.object3D) return;
-    const { x, y, z } = this.defaultPosition;
-    this.object3D.position.set(x, y, z);
-    this.object3D.rotation.set(0, this.defaultRotationY, 0);
+    
+    const cameraEl = document.querySelector('a-camera') || document.querySelector('[camera]');
+    
+    if (cameraEl && cameraEl.object3D) {
+      const camera3D = cameraEl.object3D;
+
+      // Cria um vetor apontando 5 metros para frente no eixo Z
+      const forwardVector = new THREE.Vector3(0, 0, -5);
+      
+      // Aplica a rotação do giroscópio do celular a este vetor
+      forwardVector.applyQuaternion(camera3D.quaternion);
+
+      // Soma a posição da câmera para obter a posição final no mundo
+      const targetPosition = camera3D.position.clone().add(forwardVector);
+
+      // Abaixa 1 metro para não ficar flutuando na altura do olho
+      targetPosition.y -= 1;
+
+      // Move o bonde para essa nova posição em frente à câmera
+      this.object3D.position.copy(targetPosition);
+
+      // Zera a rotação para ficar de frente
+      this.object3D.rotation.set(0, 0, 0);
+    }
+
+    // Reseta o tamanho
     this.currentScale = this.defaultScale;
     this.object3D.scale.set(this.currentScale, this.currentScale, this.currentScale);
   }
