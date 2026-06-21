@@ -33,7 +33,11 @@ body {
   width: 100%;
   overflow: hidden;
   font-family: var(--font-ui);
-  background: var(--color-ink);
+  
+  /* CORREÇÃO CRÍTICA: O background escuro aqui estava sobrepondo e escondendo 
+     o vídeo da webcam injetado pelo AR.js no DOM. Deve ser transparent. */
+  background-color: transparent; 
+  
   color: var(--color-sand);
   -webkit-tap-highlight-color: transparent;
 }
