@@ -1,13 +1,13 @@
 /**
  * model-controller.js
- * Adicionado: Rotação no eixo X (vertical) e correção na direção do arraste.
+ * Aplica fisicamente os movimentos de rotação, escala e posicionamento (pan) na entidade 3D.
  */
 export class ModelController {
   constructor(entitySelector, options = {}) {
     this.scaleMin = options.scaleMin ?? 0.3;
-    this.scaleMax = options.scaleMax ?? 4.0;
+    this.scaleMax = options.scaleMax ?? 6.0;
 
-    // Novo padrão: mais longe (z=-5) e mais baixo (y=-1) para melhor enquadramento
+    // Posição inicial: 1 unidade abaixo da câmera e 5 unidades pra frente.
     this.defaultPosition = options.defaultPosition ?? { x: 0, y: -1, z: -5 };
     this.defaultRotationY = options.defaultRotationY ?? 0;
     this.defaultScale = options.defaultScale ?? 1;
@@ -23,10 +23,6 @@ export class ModelController {
     this.entity.addEventListener('model-loaded', () => {
       console.log('ModelController: modelo carregado com sucesso.');
       this.reset();
-    });
-
-    this.entity.addEventListener('model-error', (event) => {
-      console.error('ModelController: falha ao carregar o modelo GLB.', event.detail);
     });
   }
 
@@ -51,18 +47,15 @@ export class ModelController {
 
   rotate(deltaXDegrees, deltaYDegrees = 0) {
     if (!this.object3D) return;
-    // O arraste horizontal (deltaX) gira o modelo no eixo Y (como um pião)
+    // Arrasto horizontal gira no eixo Y
     this.object3D.rotation.y += THREE.MathUtils.degToRad(deltaXDegrees);
-    
-    // O arraste vertical (deltaY) gira o modelo no eixo X (tombando para frente/trás)
+    // Arrasto vertical gira no eixo X (inclina pra cima e pra baixo)
     this.object3D.rotation.x += THREE.MathUtils.degToRad(deltaYDegrees);
   }
 
   move(deltaScreenX, deltaScreenY) {
     if (!this.object3D) return;
-    
-    // Correção espacial: Arrastar o dedo para os lados move o objeto em X.
-    // Arrastar para cima/baixo move o objeto em Y (inversamente, pois a tela cresce para baixo)
+    // Arrasto de 2 dedos move o objeto lateralmente ou para cima/baixo na tela
     this.object3D.position.x += deltaScreenX;
     this.object3D.position.y -= deltaScreenY;
   }
@@ -78,22 +71,13 @@ export class ModelController {
 
   playNarration(src = 'assets/audio/narracao.mp3') {
     const audio = document.getElementById('narration-audio');
-    if (!audio) {
-      console.warn('ModelController: elemento de áudio não encontrado.');
-      return;
-    }
-
-    if (audio.getAttribute('src') !== src) {
-      audio.setAttribute('src', src);
-    }
-
-    audio.play().catch((err) => {
-      console.warn('ModelController: reprodução bloqueada ou arquivo indisponível.', err);
-    });
+    if (!audio) return;
+    if (audio.getAttribute('src') !== src) audio.setAttribute('src', src);
+    audio.play().catch(err => console.warn('Áudio indisponível.', err));
   }
 
   takeScreenshot() {
-    console.log('ModelController: screenshot pronta para implementação futura.');
+    console.log('Implementação futura.');
   }
 
   _clamp(value, min, max) {
