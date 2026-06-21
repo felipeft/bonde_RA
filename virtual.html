@@ -13,24 +13,13 @@
 </head>
 <body>
 
-  <a-scene embedded background="color: #DCE7E3" renderer="antialias: true;">
+  <a-scene embedded background="color: #FFFFFF" renderer="antialias: true;">
     <a-assets>
       <audio id="narration-audio" preload="none"></audio>
     </a-assets>
 
-    <a-sky color="#DCE7E3"></a-sky>
-
-    <a-entity light="type: ambient; intensity: 0.7; color: #FFF6E8"></a-entity>
-    <a-entity light="type: directional; intensity: 0.75; color: #FFF6E8" position="2 4 2"></a-entity>
-
-    <a-plane
-      rotation="-90 0 0"
-      position="0 -1.5 -5"
-      width="40"
-      height="40"
-      color="#8C7A5B"
-      material="roughness: 1; metalness: 0"
-    ></a-plane>
+    <a-entity light="type: ambient; intensity: 0.9; color: #FFF6E8"></a-entity>
+    <a-entity light="type: directional; intensity: 0.55; color: #FFF6E8" position="1 2 1"></a-entity>
 
     <a-entity
       id="bonde-model"
