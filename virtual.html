@@ -13,8 +13,10 @@
 </head>
 <body>
 
-  <a-scene embedded background="color: #DCE7E3">
-    <a-assets></a-assets>
+  <a-scene embedded background="color: #DCE7E3" renderer="antialias: true;">
+    <a-assets>
+      <audio id="narration-audio" preload="none"></audio>
+    </a-assets>
 
     <a-sky color="#DCE7E3"></a-sky>
 
@@ -23,6 +25,7 @@
 
     <a-plane
       rotation="-90 0 0"
+      position="0 -1.5 -4"
       width="40"
       height="40"
       color="#8C7A5B"
@@ -30,21 +33,13 @@
     ></a-plane>
 
     <a-entity
-      id="virtual-bonde"
-      gltf-model="url(assets/bonde.glb)"
-      position="0 0 0"
+      id="bonde-model"
+      position="0 -0.5 -4"
       rotation="0 0 0"
       scale="1 1 1"
     ></a-entity>
 
-    <a-entity
-      id="camera-rig"
-      position="0 0 0"
-      rotation="0 0 0"
-      animation="property: rotation; to: 0 360 0; dur: 26000; loop: true; easing: linear"
-    >
-      <a-entity camera look-controls position="0 1.6 6"></a-entity>
-    </a-entity>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
   </a-scene>
 
   <a href="index.html" class="back-to-ar">
@@ -52,5 +47,6 @@
     Voltar para o modo AR
   </a>
 
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>
