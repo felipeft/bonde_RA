@@ -1,6 +1,6 @@
 /**
  * ui.js
- * Faz a amarração de eventos do DOM com a lógica de negócio e atualiza o estado visual da interface.
+ * Atualizado o botão de Reset para refletir a nova funcionalidade de "Centrar"
  */
 export class UIController {
   constructor({ modelController, placementManager }) {
@@ -11,7 +11,7 @@ export class UIController {
       gps: document.getElementById('btn-gps'),
       free: document.getElementById('btn-free'),
       virtual: document.getElementById('btn-virtual'),
-      reset: document.getElementById('btn-reset'),
+      reset: document.getElementById('btn-reset'), // Agora atua como "Centrar"
       info: document.getElementById('btn-info'),
       screenshot: document.getElementById('btn-screenshot'),
       playNarration: document.getElementById('btn-play-narration'),
@@ -40,6 +40,7 @@ export class UIController {
       window.location.href = 'virtual.html';
     });
 
+    // Clicar no botão vai trazer o bonde para a frente da câmera
     this.buttons.reset?.addEventListener('click', () => {
       this.modelController.reset();
     });
