@@ -1,6 +1,7 @@
 /**
  * gestures.js
- * Intercepta e processa toques na tela, traduzindo-os para ações no modelo.
+ * Adicionado: tracking do eixo Y no deslize de 1 dedo para permitir 
+ * rotação vertical (Pitch) e ver o bonde por cima ou por baixo.
  */
 export class GestureController {
   constructor(targetElement, modelController, placementManager, options = {}) {
@@ -8,11 +9,11 @@ export class GestureController {
     this.modelController = modelController;
     this.placementManager = placementManager;
 
-    this.rotationSensitivity = options.rotationSensitivity ?? 0.4;
-    this.moveSensitivity = options.moveSensitivity ?? 0.012;
+    this.rotationSensitivity = options.rotationSensitivity ?? 0.4; 
+    this.moveSensitivity = options.moveSensitivity ?? 0.012; 
 
     this.activeTouches = new Map();
-    this.lastSingleX = null;
+    this.lastSingle = null; // Agora guarda X e Y
     this.lastPinchDistance = null;
     this.lastPinchMidpoint = null;
 
@@ -35,7 +36,8 @@ export class GestureController {
     this._syncActiveTouches(event);
 
     if (this.activeTouches.size === 1) {
-      this.lastSingleX = this._first().clientX;
+      const touch = this._first();
+      this.lastSingle = { x: touch.clientX, y: touch.clientY };
     }
 
     if (this.activeTouches.size === 2) {
@@ -49,8 +51,6 @@ export class GestureController {
     event.preventDefault();
     this._syncActiveTouches(event);
 
-    // Permitir rotação e escala independentemente do modo, 
-    // mas pan (arraste lateral) apenas se for Modo Livre.
     if (this.activeTouches.size === 1) {
       this._handleRotate();
     } else if (this.activeTouches.size === 2) {
@@ -70,9 +70,10 @@ export class GestureController {
     }
 
     if (this.activeTouches.size === 1) {
-      this.lastSingleX = this._first().clientX;
+      const touch = this._first();
+      this.lastSingle = { x: touch.clientX, y: touch.clientY };
     } else if (this.activeTouches.size === 0) {
-      this.lastSingleX = null;
+      this.lastSingle = null;
     }
   }
 
@@ -85,13 +86,17 @@ export class GestureController {
 
   _handleRotate() {
     const touch = this._first();
-    if (this.lastSingleX === null) {
-      this.lastSingleX = touch.clientX;
+    if (!this.lastSingle) {
+      this.lastSingle = { x: touch.clientX, y: touch.clientY };
       return;
     }
-    const deltaX = touch.clientX - this.lastSingleX;
-    this.modelController.rotate(deltaX * this.rotationSensitivity);
-    this.lastSingleX = touch.clientX;
+    
+    // Captura o movimento nos dois eixos da tela
+    const deltaX = touch.clientX - this.lastSingle.x;
+    const deltaY = touch.clientY - this.lastSingle.y;
+
+    this.modelController.rotate(deltaX * this.rotationSensitivity, deltaY * this.rotationSensitivity);
+    this.lastSingle = { x: touch.clientX, y: touch.clientY };
   }
 
   _handlePinchScale() {
@@ -119,6 +124,7 @@ export class GestureController {
 
     const dx = midpoint.x - this.lastPinchMidpoint.x;
     const dy = midpoint.y - this.lastPinchMidpoint.y;
+    
     this.modelController.move(dx * this.moveSensitivity, dy * this.moveSensitivity);
     this.lastPinchMidpoint = midpoint;
   }
