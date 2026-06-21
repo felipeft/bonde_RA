@@ -1,15 +1,14 @@
 /**
  * model-controller.js
- * Responsabilidade única: encapsular e expor todas as operações de manipulação 
- * exclusivas do modelo 3D (Bonde).
+ * Adicionado: Rotação no eixo X (vertical) e correção na direção do arraste.
  */
 export class ModelController {
   constructor(entitySelector, options = {}) {
     this.scaleMin = options.scaleMin ?? 0.3;
     this.scaleMax = options.scaleMax ?? 4.0;
 
-    // Posição ajustada para enquadrar perfeitamente no novo setup de câmera
-    this.defaultPosition = options.defaultPosition ?? { x: 0, y: -0.5, z: -4 };
+    // Novo padrão: mais longe (z=-5) e mais baixo (y=-1) para melhor enquadramento
+    this.defaultPosition = options.defaultPosition ?? { x: 0, y: -1, z: -5 };
     this.defaultRotationY = options.defaultRotationY ?? 0;
     this.defaultScale = options.defaultScale ?? 1;
 
@@ -50,15 +49,22 @@ export class ModelController {
     this.setScale(this.currentScale * factor);
   }
 
-  rotate(deltaYDegrees) {
+  rotate(deltaXDegrees, deltaYDegrees = 0) {
     if (!this.object3D) return;
-    this.object3D.rotation.y += THREE.MathUtils.degToRad(deltaYDegrees);
+    // O arraste horizontal (deltaX) gira o modelo no eixo Y (como um pião)
+    this.object3D.rotation.y += THREE.MathUtils.degToRad(deltaXDegrees);
+    
+    // O arraste vertical (deltaY) gira o modelo no eixo X (tombando para frente/trás)
+    this.object3D.rotation.x += THREE.MathUtils.degToRad(deltaYDegrees);
   }
 
-  move(deltaX, deltaZ) {
+  move(deltaScreenX, deltaScreenY) {
     if (!this.object3D) return;
-    this.object3D.position.x += deltaX;
-    this.object3D.position.z += deltaZ;
+    
+    // Correção espacial: Arrastar o dedo para os lados move o objeto em X.
+    // Arrastar para cima/baixo move o objeto em Y (inversamente, pois a tela cresce para baixo)
+    this.object3D.position.x += deltaScreenX;
+    this.object3D.position.y -= deltaScreenY;
   }
 
   reset() {
