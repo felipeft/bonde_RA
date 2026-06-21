@@ -1,7 +1,6 @@
 /**
- * UIController
- * Responsabilidade única: ligar os botões da interface (barra inferior,
- * modal de informações) às ações correspondentes nos demais módulos.
+ * ui.js
+ * Faz a amarração de eventos do DOM com a lógica de negócio e atualiza o estado visual da interface.
  */
 export class UIController {
   constructor({ modelController, placementManager }) {
@@ -78,12 +77,12 @@ export class UIController {
 
   _updateModeStatus(mode) {
     const labels = {
-      gps: '📍 Modo Histórico',
-      free: '✋ Modo Livre',
+      gps: '<span class="material-symbols-rounded icon-inline">location_on</span> Modo Histórico',
+      free: '<span class="material-symbols-rounded icon-inline">front_hand</span> Modo Livre',
     };
 
     if (this.statusBadge) {
-      this.statusBadge.textContent = labels[mode] ?? '';
+      this.statusBadge.innerHTML = labels[mode] ?? '';
     }
 
     this.buttons.gps?.setAttribute('aria-pressed', String(mode === 'gps'));
