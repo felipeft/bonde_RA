@@ -2,7 +2,7 @@
  * GestureController
  * Responsabilidade única: interpretar gestos de toque sobre a cena AR.
  *
- * - 1 dedo, arraste horizontal e vertical -> rotação livre em todos os eixos
+ * - 1 dedo, arraste horizontal/vertical -> rotação (eixos Y e X globais)
  * - 2 dedos, distância variando -> escala (pinça)
  * - 2 dedos, ponto médio variando -> deslocamento (apenas em Modo Livre)
  */
@@ -16,9 +16,8 @@ export class GestureController {
     this.moveSensitivity = options.moveSensitivity ?? 0.012; // unidades por pixel
 
     this.activeTouches = new Map();
-    
     // Agora armazenamos as coordenadas X e Y do toque único
-    this.lastSingle = null;
+    this.lastSingle = null; 
     this.lastPinchDistance = null;
     this.lastPinchMidpoint = null;
 
@@ -42,7 +41,6 @@ export class GestureController {
 
     if (this.activeTouches.size === 1) {
       const touch = this._first();
-      // Armazena X e Y
       this.lastSingle = { x: touch.clientX, y: touch.clientY };
     }
 
@@ -90,20 +88,18 @@ export class GestureController {
 
   _handleRotate() {
     const touch = this._first();
-    
     if (!this.lastSingle) {
       this.lastSingle = { x: touch.clientX, y: touch.clientY };
       return;
     }
     
-    // Calcula a diferença tanto horizontal quanto vertical
+    // Captura o movimento nos dois eixos da tela
     const deltaX = touch.clientX - this.lastSingle.x;
     const deltaY = touch.clientY - this.lastSingle.y;
-
-    // Envia os dois movimentos para o modelo girar
+    
+    // Envia ambos os eixos para o controlador de modelo
     this.modelController.rotate(deltaX * this.rotationSensitivity, deltaY * this.rotationSensitivity);
     
-    // Atualiza a última posição
     this.lastSingle = { x: touch.clientX, y: touch.clientY };
   }
 
