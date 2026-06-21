@@ -1,10 +1,7 @@
 /**
- * GestureController
- * Responsabilidade única: interpretar gestos de toque sobre a cena AR.
- *
- * - 1 dedo, arraste horizontal/vertical -> rotação (eixos Y e X globais)
- * - 2 dedos, distância variando -> escala (pinça)
- * - 2 dedos, ponto médio variando -> deslocamento (apenas em Modo Livre)
+ * gestures.js
+ * Captura 1 dedo para ROTACIONAR (em todos os eixos) 
+ * e 2 dedos para MOVER (Arrastar pela tela) e ESCALAR (Pinça).
  */
 export class GestureController {
   constructor(targetElement, modelController, placementManager, options = {}) {
@@ -12,12 +9,11 @@ export class GestureController {
     this.modelController = modelController;
     this.placementManager = placementManager;
 
-    this.rotationSensitivity = options.rotationSensitivity ?? 0.4; // graus por pixel
-    this.moveSensitivity = options.moveSensitivity ?? 0.012; // unidades por pixel
+    this.rotationSensitivity = options.rotationSensitivity ?? 0.4; 
+    this.moveSensitivity = options.moveSensitivity ?? 0.012; 
 
     this.activeTouches = new Map();
-    // Agora armazenamos as coordenadas X e Y do toque único
-    this.lastSingle = null; 
+    this.lastSingle = null;
     this.lastPinchDistance = null;
     this.lastPinchMidpoint = null;
 
@@ -59,7 +55,10 @@ export class GestureController {
       this._handleRotate();
     } else if (this.activeTouches.size === 2) {
       this._handlePinchScale();
-      this._handlePan();
+      // O mover de 2 dedos só funciona se estiver no Modo Livre
+      if (this.placementManager.isFreeMode()) {
+        this._handlePan();
+      }
     }
   }
 
@@ -93,13 +92,11 @@ export class GestureController {
       return;
     }
     
-    // Captura o movimento nos dois eixos da tela
     const deltaX = touch.clientX - this.lastSingle.x;
     const deltaY = touch.clientY - this.lastSingle.y;
-    
-    // Envia ambos os eixos para o controlador de modelo
+
+    // Envia os movimentos X e Y para rotacionar o bonde
     this.modelController.rotate(deltaX * this.rotationSensitivity, deltaY * this.rotationSensitivity);
-    
     this.lastSingle = { x: touch.clientX, y: touch.clientY };
   }
 
@@ -118,10 +115,6 @@ export class GestureController {
   }
 
   _handlePan() {
-    if (!this.placementManager.isFreeMode()) {
-      return;
-    }
-
     const [t1, t2] = this.activeTouches.values();
     const midpoint = this._midpoint(t1, t2);
 
@@ -132,6 +125,8 @@ export class GestureController {
 
     const dx = midpoint.x - this.lastPinchMidpoint.x;
     const dy = midpoint.y - this.lastPinchMidpoint.y;
+    
+    // Envia o movimento do arrasto de 2 dedos para transladar o objeto
     this.modelController.move(dx * this.moveSensitivity, dy * this.moveSensitivity);
     this.lastPinchMidpoint = midpoint;
   }
