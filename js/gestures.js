@@ -1,10 +1,6 @@
 /**
- * GestureController
- * Responsabilidade única: interpretar gestos de toque sobre a cena AR.
- *
- *  - 1 dedo, arraste horizontal  -> rotação (eixo Y)
- *  - 2 dedos, distância variando -> escala (pinça)
- *  - 2 dedos, ponto médio variando -> deslocamento (apenas em Modo Livre)
+ * gestures.js
+ * Intercepta e processa toques na tela, traduzindo-os para ações no modelo.
  */
 export class GestureController {
   constructor(targetElement, modelController, placementManager, options = {}) {
@@ -12,8 +8,8 @@ export class GestureController {
     this.modelController = modelController;
     this.placementManager = placementManager;
 
-    this.rotationSensitivity = options.rotationSensitivity ?? 0.4; // graus por pixel
-    this.moveSensitivity = options.moveSensitivity ?? 0.012; // unidades por pixel
+    this.rotationSensitivity = options.rotationSensitivity ?? 0.4;
+    this.moveSensitivity = options.moveSensitivity ?? 0.012;
 
     this.activeTouches = new Map();
     this.lastSingleX = null;
@@ -53,11 +49,15 @@ export class GestureController {
     event.preventDefault();
     this._syncActiveTouches(event);
 
+    // Permitir rotação e escala independentemente do modo, 
+    // mas pan (arraste lateral) apenas se for Modo Livre.
     if (this.activeTouches.size === 1) {
       this._handleRotate();
     } else if (this.activeTouches.size === 2) {
       this._handlePinchScale();
-      this._handlePan();
+      if (this.placementManager.isFreeMode()) {
+        this._handlePan();
+      }
     }
   }
 
@@ -109,10 +109,6 @@ export class GestureController {
   }
 
   _handlePan() {
-    if (!this.placementManager.isFreeMode()) {
-      return;
-    }
-
     const [t1, t2] = this.activeTouches.values();
     const midpoint = this._midpoint(t1, t2);
 
