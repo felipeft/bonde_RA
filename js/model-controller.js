@@ -1,15 +1,16 @@
 /**
- * model-controller.js
- * Modificado: A função reset() agora teletransporta o bonde dinamicamente 
- * para onde a câmera do celular estiver apontando no mundo real.
+ * ModelController
+ * Responsabilidade única: manipulação 3D do bonde.
+ * Com teletransporte dinâmico baseado na direção da câmera do celular.
  */
 export class ModelController {
   constructor(entitySelector, options = {}) {
-    this.scaleMin = options.scaleMin ?? 0.3;
-    this.scaleMax = options.scaleMax ?? 6.0;
-
+    this.scaleMin = options.scaleMin ?? 0.05;
+    this.scaleMax = options.scaleMax ?? 4.0;
     this.defaultRotationY = options.defaultRotationY ?? 0;
-    this.defaultScale = options.defaultScale ?? 1;
+    
+    // Tamanho inicial mais delicado para não estourar a tela com o zoom do CSS
+    this.defaultScale = options.defaultScale ?? 0.3;
 
     this.entity = document.querySelector(entitySelector);
     this.currentScale = this.defaultScale;
@@ -45,50 +46,72 @@ export class ModelController {
 
   rotate(deltaXDegrees, deltaYDegrees = 0) {
     if (!this.object3D) return;
-    this.object3D.rotation.y += THREE.MathUtils.degToRad(deltaXDegrees);
-    this.object3D.rotation.x += THREE.MathUtils.degToRad(deltaYDegrees);
+
+    const radX = THREE.MathUtils.degToRad(deltaXDegrees);
+    const radY = THREE.MathUtils.degToRad(deltaYDegrees);
+
+    const axisY = new THREE.Vector3(0, 1, 0);
+    const axisX = new THREE.Vector3(1, 0, 0);
+
+    const quaternionY = new THREE.Quaternion().setFromAxisAngle(axisY, radX);
+    const quaternionX = new THREE.Quaternion().setFromAxisAngle(axisX, radY);
+
+    const totalRotation = new THREE.Quaternion().multiplyQuaternions(quaternionY, quaternionX);
+    this.object3D.quaternion.premultiply(totalRotation);
   }
 
-  move(deltaScreenX, deltaScreenY) {
+  move(deltaX, deltaY) {
     if (!this.object3D) return;
-    this.object3D.position.x += deltaScreenX;
-    this.object3D.position.y -= deltaScreenY;
+    this.object3D.position.x += deltaX;
+    this.object3D.position.y -= deltaY; 
   }
 
   /**
-   * Pega a posição e rotação atual da câmera e joga o bonde 
-   * exatamente 5 metros para a frente do usuário.
+   * MÁGICA DO TELETRANSPORTE:
+   * Lê a direção exata para onde o celular está apontando e posiciona
+   * o bonde a 4 metros de distância bem no centro da visão do usuário.
    */
   reset() {
     if (!this.object3D) return;
-    
+
+    // Remove qualquer rotação torta anterior
+    this.object3D.quaternion.identity();
+
     const cameraEl = document.querySelector('a-camera') || document.querySelector('[camera]');
     
     if (cameraEl && cameraEl.object3D) {
       const camera3D = cameraEl.object3D;
 
-      // Cria um vetor apontando 5 metros para frente no eixo Z
-      const forwardVector = new THREE.Vector3(0, 0, -5);
+      // Cria um vetor apontando 4 metros para frente
+      const forwardVector = new THREE.Vector3(0, 0, -4);
       
-      // Aplica a rotação do giroscópio do celular a este vetor
+      // Aplica a inclinação/rotação atual do celular nesse vetor
       forwardVector.applyQuaternion(camera3D.quaternion);
 
-      // Soma a posição da câmera para obter a posição final no mundo
+      // Soma a posição da câmera para obter o ponto final no espaço
       const targetPosition = camera3D.position.clone().add(forwardVector);
+      
+      // Abaixa um pouco para não ficar exatamente na linha do olho
+      targetPosition.y -= 0.5;
 
-      // Abaixa 1 metro para não ficar flutuando na altura do olho
-      targetPosition.y -= 1;
-
-      // Move o bonde para essa nova posição em frente à câmera
+      // Move o bonde para essa coordenada dinâmica
       this.object3D.position.copy(targetPosition);
-
-      // Zera a rotação para ficar de frente
-      this.object3D.rotation.set(0, 0, 0);
+    } else {
+      // Fallback seguro caso a câmera não seja encontrada
+      this.object3D.position.set(0, -0.5, -4);
     }
 
-    // Reseta o tamanho
+    this.object3D.rotation.set(0, this.defaultRotationY, 0);
     this.currentScale = this.defaultScale;
     this.object3D.scale.set(this.currentScale, this.currentScale, this.currentScale);
+  }
+
+  enableGPSMode() {
+    console.log('ModelController: modo histórico (GPS) ativado.');
+  }
+
+  enablePlacementMode() {
+    console.log('ModelController: modo livre ativado.');
   }
 
   playNarration(src = 'assets/audio/narracao.mp3') {
