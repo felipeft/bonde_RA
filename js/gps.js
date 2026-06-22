@@ -18,7 +18,7 @@ export class GPSController {
       entity.setAttribute('rotation', '0 0 0');
 
       // as coordenadas devem ser colocadas aqui
-      entity.setAttribute('gps-new-entity-place', 'latitude: -4.9724306; longitude: -39.0209987');
+      entity.setAttribute('gps-new-entity-place', 'latitude: -4.9687434; longitude: -39.0117863');
     }
   }
 
