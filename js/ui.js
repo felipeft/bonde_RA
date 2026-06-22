@@ -1,6 +1,7 @@
 /**
- * ui.js
- * Atualizado o botão de Reset para refletir a nova funcionalidade de "Centrar"
+ * UIController
+ * Responsabilidade única: ligar os botões da interface (barra inferior,
+ * modal de informações) às ações correspondentes nos demais módulos.
  */
 export class UIController {
   constructor({ modelController, placementManager }) {
@@ -11,7 +12,7 @@ export class UIController {
       gps: document.getElementById('btn-gps'),
       free: document.getElementById('btn-free'),
       virtual: document.getElementById('btn-virtual'),
-      reset: document.getElementById('btn-reset'), // Agora atua como "Centrar"
+      reset: document.getElementById('btn-reset'),
       info: document.getElementById('btn-info'),
       screenshot: document.getElementById('btn-screenshot'),
       playNarration: document.getElementById('btn-play-narration'),
@@ -40,9 +41,11 @@ export class UIController {
       window.location.href = 'virtual.html';
     });
 
-    // Clicar no botão vai trazer o bonde para a frente da câmera
     this.buttons.reset?.addEventListener('click', () => {
-      this.modelController.reset();
+      // TRAVA DE SEGURANÇA: Só executa se for Modo Livre
+      if (this.placementManager.isFreeMode()) {
+        this.modelController.reset();
+      }
     });
 
     this.buttons.info?.addEventListener('click', () => {
@@ -78,17 +81,28 @@ export class UIController {
 
   _updateModeStatus(mode) {
     const labels = {
-      gps: '<span class="material-symbols-rounded icon-inline">location_on</span> Modo Histórico',
-      free: '<span class="material-symbols-rounded icon-inline">front_hand</span> Modo Livre',
+      gps: '📍 Modo Histórico',
+      free: '✋ Modo Livre',
     };
 
     if (this.statusBadge) {
-      this.statusBadge.innerHTML = labels[mode] ?? '';
+      this.statusBadge.textContent = labels[mode] ?? '';
     }
 
     this.buttons.gps?.setAttribute('aria-pressed', String(mode === 'gps'));
     this.buttons.free?.setAttribute('aria-pressed', String(mode === 'free'));
     this.buttons.gps?.classList.toggle('active', mode === 'gps');
     this.buttons.free?.classList.toggle('active', mode === 'free');
+
+    // MÁGICA VISUAL: Desabilita a aparência do botão "Centrar/Reset" quando no modo GPS
+    if (this.buttons.reset) {
+      if (mode === 'gps') {
+        this.buttons.reset.style.opacity = '0.4';
+        this.buttons.reset.style.pointerEvents = 'none'; // Evita o clique no CSS
+      } else {
+        this.buttons.reset.style.opacity = '1';
+        this.buttons.reset.style.pointerEvents = 'auto'; // Restaura o botão
+      }
+    }
   }
 }
