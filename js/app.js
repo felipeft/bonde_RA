@@ -1,6 +1,7 @@
 /**
  * app.js
- * Ponto de entrada central.
+ * Ponto de entrada da aplicação: inicializa o controlador do modelo,
+ * o gerenciador de posicionamento, os gestos de toque e a interface.
  */
 import { ModelController } from './model-controller.js';
 import { GPSController } from './gps.js';
@@ -10,12 +11,16 @@ import { UIController } from './ui.js';
 
 function init() {
   const scene = document.querySelector('a-scene');
-  if (!scene) return;
+  if (!scene) {
+    console.error('app.js: <a-scene> não encontrada no documento.');
+    return;
+  }
 
   const modelController = new ModelController('#bonde-model');
   const gpsController = new GPSController(modelController);
+
   const placementManager = new PlacementManager(gpsController, {
-    onModeChange: (mode) => console.log(`Modo alterado para "${mode}".`),
+    onModeChange: (mode) => console.log(`app.js: modo de posicionamento alterado para "${mode}".`),
   });
 
   new UIController({ modelController, placementManager });
@@ -28,11 +33,11 @@ function init() {
     modelController.loadModel('assets/bonde.glb');
     startGestures();
     
-    // Pequeno atraso para garantir que a câmera e o giroscópio iniciaram, 
-    // e então teletransporta o bonde para o centro da visão do usuário.
+    // ATRASO CRÍTICO: Espera 800 milissegundos para o celular ligar os 
+    // sensores do giroscópio e a lente da câmera antes de calcular o teletransporte.
     setTimeout(() => {
       modelController.reset();
-    }, 500);
+    }, 800);
   };
 
   if (scene.hasLoaded) {
