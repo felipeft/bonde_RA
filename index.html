@@ -12,13 +12,20 @@
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
   <script type='text/javascript' src='https://raw.githack.com/AR-js-org/AR.js/3.4.7/three.js/build/ar-threex-location-only.js'></script>
   <script type='text/javascript' src='https://raw.githack.com/AR-js-org/AR.js/3.4.7/aframe/build/aframe-ar.js'></script>
+
+  <style>
+    html, body {
+      background-color: transparent !important;
+      background: transparent !important;
+    }
+  </style>
 </head>
 <body>
 
   <a-scene
     vr-mode-ui="enabled: false"
-    renderer="antialias: true; alpha: true; colorManagement: false;"
-    arjs="sourceType: webcam; debugUIEnabled: false;"
+    renderer="antialias: true; alpha: true;"
+    arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;"
   >
     <a-assets>
       <audio id="narration-audio" preload="none"></audio>
